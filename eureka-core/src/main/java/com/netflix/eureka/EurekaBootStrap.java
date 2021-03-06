@@ -173,11 +173,15 @@ public class EurekaBootStrap implements ServletContextListener {
             // 与上面一样，也是从eureka-client.properties文件中读取配置，但是读取的是客户端相关的配置
             // 而上面读取的是服务实例相关的配置
             EurekaClientConfig eurekaClientConfig = new DefaultEurekaClientConfig();
+            // eureka client初始化
             eurekaClient = new DiscoveryClient(applicationInfoManager, eurekaClientConfig);
         } else {
             applicationInfoManager = eurekaClient.getApplicationInfoManager();
         }
 
+        // 第三步，注册相关的处理
+        // Registry是一个名词，而不是动词，所以是注册表
+        // PeerAwareInstanceRegistry,从字面意思理解，服务注册表，并且可以感知到eureka集群。
         PeerAwareInstanceRegistry registry;
         if (isAws(applicationInfoManager.getInfo())) {
             registry = new AwsInstanceRegistry(
@@ -197,6 +201,7 @@ public class EurekaBootStrap implements ServletContextListener {
             );
         }
 
+        // 第四步，处理peerNode相关
         PeerEurekaNodes peerEurekaNodes = getPeerEurekaNodes(
                 registry,
                 eurekaServerConfig,
@@ -205,6 +210,7 @@ public class EurekaBootStrap implements ServletContextListener {
                 applicationInfoManager
         );
 
+        // 第五步，创建eurekaServer的上下文，包含了eurekaServer需要的所有东西
         serverContext = new DefaultEurekaServerContext(
                 eurekaServerConfig,
                 serverCodecs,
@@ -213,16 +219,20 @@ public class EurekaBootStrap implements ServletContextListener {
                 applicationInfoManager
         );
 
+        // 上下文holder，在整个系统中，谁都可以通过holder获取上下文
         EurekaServerContextHolder.initialize(serverContext);
 
+        // eureka server上下文初始化
         serverContext.initialize();
         logger.info("Initialized server context");
 
         // Copy registry from neighboring eureka node
+        // 第六步，从相邻节点拷贝注册表
         int registryCount = registry.syncUp();
         registry.openForTraffic(applicationInfoManager, registryCount);
 
         // Register all monitoring statistics.
+        // 第七步，注册所有监控统计
         EurekaMonitors.registerAllStats();
     }
     

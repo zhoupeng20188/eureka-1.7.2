@@ -116,7 +116,9 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
         this.serverConfig = serverConfig;
         this.clientConfig = clientConfig;
         this.serverCodecs = serverCodecs;
+        // 最近被摘除的队列
         this.recentCanceledQueue = new CircularQueue<Pair<Long, String>>(1000);
+        // 最近注册的队列
         this.recentRegisteredQueue = new CircularQueue<Pair<Long, String>>(1000);
 
         this.renewsLastMin = new MeasuredRate(1000 * 60 * 1);
