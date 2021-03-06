@@ -1252,6 +1252,7 @@ public class DiscoveryClient implements EurekaClient {
     private void initScheduledTasks() {
         if (clientConfig.shouldFetchRegistry()) {
             // registry cache refresh timer
+            // 拉取注册表间隔：默认30s
             int registryFetchIntervalSeconds = clientConfig.getRegistryFetchIntervalSeconds();
             int expBackOffBound = clientConfig.getCacheRefreshExecutorExponentialBackOffBound();
             // 真正添加任务，去拉取注册表
@@ -1269,6 +1270,7 @@ public class DiscoveryClient implements EurekaClient {
         }
 
         if (clientConfig.shouldRegisterWithEureka()) {
+            // heartbeat间隔：默认30s
             int renewalIntervalInSecs = instanceInfo.getLeaseInfo().getRenewalIntervalInSecs();
             int expBackOffBound = clientConfig.getHeartbeatExecutorExponentialBackOffBound();
             logger.info("Starting heartbeat executor: " + "renew interval is: " + renewalIntervalInSecs);
@@ -1314,9 +1316,11 @@ public class DiscoveryClient implements EurekaClient {
             };
 
             if (clientConfig.shouldOnDemandUpdateStatusChange()) {
+                // 如果配置了此项，则会注册监听器
                 applicationInfoManager.registerStatusChangeListener(statusChangeListener);
             }
 
+            // 服务实例复制
             instanceInfoReplicator.start(clientConfig.getInitialInstanceInfoReplicationIntervalSeconds());
         } else {
             logger.info("Not registering with Eureka server per configuration");
