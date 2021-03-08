@@ -889,6 +889,7 @@ public class DiscoveryClient implements EurekaClient {
             // If APPINFO was registered
             if (applicationInfoManager != null && clientConfig.shouldRegisterWithEureka()) {
                 applicationInfoManager.setInstanceStatus(InstanceStatus.DOWN);
+                // 下线时最核心的方法
                 unregister();
             }
 
