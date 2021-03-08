@@ -1090,7 +1090,9 @@ public class DiscoveryClient implements EurekaClient {
             String reconcileHashCode = "";
             if (fetchRegistryUpdateLock.tryLock()) {
                 try {
+                    // 拉取到的增量合并到本地
                     updateDelta(delta);
+                    // 计算合并后本地数据的hash值
                     reconcileHashCode = getReconcileHashCode(applications);
                 } finally {
                     fetchRegistryUpdateLock.unlock();
@@ -1099,7 +1101,9 @@ public class DiscoveryClient implements EurekaClient {
                 logger.warn("Cannot acquire update lock, aborting getAndUpdateDelta");
             }
             // There is a diff in number of instances for some reason
+            // 将上面计算出的hash值与服务端带来的hash值做比较
             if (!reconcileHashCode.equals(delta.getAppsHashCode()) || clientConfig.shouldLogDeltaDiff()) {
+                // 如果hash值不相等，说明增量合并出问题了，发起全量拉取的请求
                 reconcileAndLogDifference(delta, reconcileHashCode);  // this makes a remoteCall
             }
         } else {
@@ -1213,6 +1217,7 @@ public class DiscoveryClient implements EurekaClient {
 
                 ++deltaCount;
                 if (ActionType.ADDED.equals(instance.getActionType())) {
+                    // 如果是新增的，则在本地加入
                     Application existingApp = applications.getRegisteredApplications(instance.getAppName());
                     if (existingApp == null) {
                         applications.addApplication(app);
@@ -1220,6 +1225,7 @@ public class DiscoveryClient implements EurekaClient {
                     logger.debug("Added instance {} to the existing apps in region {}", instance.getId(), instanceRegion);
                     applications.getRegisteredApplications(instance.getAppName()).addInstance(instance);
                 } else if (ActionType.MODIFIED.equals(instance.getActionType())) {
+                    // 如果是修改的，更新本地
                     Application existingApp = applications.getRegisteredApplications(instance.getAppName());
                     if (existingApp == null) {
                         applications.addApplication(app);
@@ -1229,6 +1235,7 @@ public class DiscoveryClient implements EurekaClient {
                     applications.getRegisteredApplications(instance.getAppName()).addInstance(instance);
 
                 } else if (ActionType.DELETED.equals(instance.getActionType())) {
+                    // 如果是删除的，则在本地删除
                     Application existingApp = applications.getRegisteredApplications(instance.getAppName());
                     if (existingApp == null) {
                         applications.addApplication(app);
