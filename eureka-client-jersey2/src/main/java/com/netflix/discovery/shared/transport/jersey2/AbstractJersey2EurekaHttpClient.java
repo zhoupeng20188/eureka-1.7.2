@@ -83,12 +83,14 @@ public abstract class AbstractJersey2EurekaHttpClient implements EurekaHttpClien
 
     @Override
     public EurekaHttpResponse<Void> register(InstanceInfo info) {
+        // eureka client实际注册的方法
         String urlPath = "apps/" + info.getAppName();
         Response response = null;
         try {
             Builder resourceBuilder = jerseyClient.target(serviceUrl).path(urlPath).request();
             addExtraProperties(resourceBuilder);
             addExtraHeaders(resourceBuilder);
+            // 发送post请求
             response = resourceBuilder
                     .accept(MediaType.APPLICATION_JSON)
                     .acceptEncoding("gzip")
@@ -206,11 +208,13 @@ public abstract class AbstractJersey2EurekaHttpClient implements EurekaHttpClien
 
     @Override
     public EurekaHttpResponse<Applications> getApplications(String... regions) {
+        // 发送全量拉取注册表请求
         return getApplicationsInternal("apps/", regions);
     }
 
     @Override
     public EurekaHttpResponse<Applications> getDelta(String... regions) {
+        // 发送增量拉取注册表请求
         return getApplicationsInternal("apps/delta", regions);
     }
 

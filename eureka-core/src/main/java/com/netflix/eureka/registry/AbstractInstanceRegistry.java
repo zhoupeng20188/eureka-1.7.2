@@ -193,7 +193,18 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
      */
     public void register(InstanceInfo registrant, int leaseDuration, boolean isReplication) {
         try {
+            // 读锁，即共享锁，多个线程可同时加读锁
+            // 但是与写锁是互斥的，即不允许一个线程读，一个线程写
+            // 允许同一个线程读和写
             read.lock();
+            // 注册表实际上就是一个concurrentHashMap。
+            /**
+             * 形式为{"serviceA":{
+             *                      "instance01":Lease<InstanceInfo>,
+             *                      "instance02":Lease<InstanceInfo>,
+             *                      "instance03":Lease<InstanceInfo>
+             *                   }
+             */
             Map<String, Lease<InstanceInfo>> gMap = registry.get(registrant.getAppName());
             REGISTER.increment(isReplication);
             if (gMap == null) {
@@ -238,6 +249,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             }
             gMap.put(registrant.getId(), lease);
             synchronized (recentRegisteredQueue) {
+                // 最近注册的队列
                 recentRegisteredQueue.add(new Pair<Long, String>(
                         System.currentTimeMillis(),
                         registrant.getAppName() + "(" + registrant.getId() + ")"));
@@ -268,6 +280,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             registrant.setActionType(ActionType.ADDED);
             recentlyChangedQueue.add(new RecentlyChangedItem(lease));
             registrant.setLastUpdatedTimestamp();
+            // 清空缓存
             invalidateCache(registrant.getAppName(), registrant.getVIPAddress(), registrant.getSecureVipAddress());
             logger.info("Registered instance {}/{} with status {} (replication={})",
                     registrant.getAppName(), registrant.getId(), registrant.getStatus(), isReplication);

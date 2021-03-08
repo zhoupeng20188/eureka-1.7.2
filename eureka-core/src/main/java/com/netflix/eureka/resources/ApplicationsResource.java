@@ -116,7 +116,7 @@ public class ApplicationsResource {
                                   @HeaderParam(EurekaAccept.HTTP_X_EUREKA_ACCEPT) String eurekaAccept,
                                   @Context UriInfo uriInfo,
                                   @Nullable @QueryParam("regions") String regionsStr) {
-
+        // 服务端处理全量拉取注册表
         boolean isRemoteRegionRequested = null != regionsStr && !regionsStr.isEmpty();
         String[] regions = null;
         if (!isRemoteRegionRequested) {
@@ -196,6 +196,7 @@ public class ApplicationsResource {
             @HeaderParam(EurekaAccept.HTTP_X_EUREKA_ACCEPT) String eurekaAccept,
             @Context UriInfo uriInfo, @Nullable @QueryParam("regions") String regionsStr) {
 
+        // 服务端处理增量拉取注册表
         boolean isRemoteRegionRequested = null != regionsStr && !regionsStr.isEmpty();
 
         // If the delta flag is disabled in discovery or if the lease expiration

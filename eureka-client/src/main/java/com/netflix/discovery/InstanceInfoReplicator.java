@@ -106,6 +106,7 @@ class InstanceInfoReplicator implements Runnable {
 
             Long dirtyTimestamp = instanceInfo.isDirtyWithTime();
             if (dirtyTimestamp != null) {
+                // 向eureka server注册
                 discoveryClient.register();
                 instanceInfo.unsetIsDirty(dirtyTimestamp);
             }

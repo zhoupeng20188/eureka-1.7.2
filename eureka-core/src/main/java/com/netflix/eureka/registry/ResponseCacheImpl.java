@@ -127,8 +127,17 @@ public class ResponseCacheImpl implements ResponseCache {
         this.registry = registry;
 
         long responseCacheUpdateIntervalMs = serverConfig.getResponseCacheUpdateIntervalMs();
+        // 读写缓存类型是一个LoadingCache
+        /**
+         * LoadingCache 是一个附加着 CacheLoader 的 Cache。LoadingCache<K,V>
+         * 在 Guava 中是一个 interface，通常是用来本地 Cache 缓存 k-v 数据，value 会一直保存在内存中直到被移除或者失效。
+         * 实现这个接口的类期望是线程安全的，能够安全的在多线程程序中被访问。
+         *
+         * 当第一次调用 get() 方法时，如果 value 不存在则会触发 load() 方法，load 方法不能返回 null，否则会报错。
+         */
         this.readWriteCacheMap =
                 CacheBuilder.newBuilder().initialCapacity(1000)
+                        // 默认180s后自动过期
                         .expireAfterWrite(serverConfig.getResponseCacheAutoExpirationInSeconds(), TimeUnit.SECONDS)
                         .removalListener(new RemovalListener<Key, Value>() {
                             @Override
@@ -140,6 +149,8 @@ public class ResponseCacheImpl implements ResponseCache {
                                 }
                             }
                         })
+                        // CacheLoader为guava中的类
+                        // build中重写的load方法会加载所有key的value
                         .build(new CacheLoader<Key, Value>() {
                             @Override
                             public Value load(Key key) throws Exception {
@@ -147,12 +158,15 @@ public class ResponseCacheImpl implements ResponseCache {
                                     Key cloneWithNoRegions = key.cloneWithoutRegions();
                                     regionSpecificKeys.put(cloneWithNoRegions, key);
                                 }
+                                // 根据key获取value
                                 Value value = generatePayload(key);
                                 return value;
                             }
                         });
 
         if (shouldUseReadOnlyResponseCache) {
+            // 启动定时任务，默认30s
+            // 将读写缓存中的数据同步到只读缓存中
             timer.schedule(getCacheUpdateTask(),
                     new Date(((System.currentTimeMillis() / responseCacheUpdateIntervalMs) * responseCacheUpdateIntervalMs)
                             + responseCacheUpdateIntervalMs),
@@ -180,6 +194,7 @@ public class ResponseCacheImpl implements ResponseCache {
                         CurrentRequestVersion.set(key.getVersion());
                         Value cacheValue = readWriteCacheMap.get(key);
                         Value currentCacheValue = readOnlyCacheMap.get(key);
+                        // 比较读写缓存和只读缓存，如果不一致，则把读写缓存中的数据同步到只读缓存中
                         if (cacheValue != currentCacheValue) {
                             readOnlyCacheMap.put(key, cacheValue);
                         }
@@ -345,10 +360,12 @@ public class ResponseCacheImpl implements ResponseCache {
         Value payload = null;
         try {
             if (useReadOnlyCache) {
+                // 只读缓存
                 final Value currentPayload = readOnlyCacheMap.get(key);
                 if (currentPayload != null) {
                     payload = currentPayload;
                 } else {
+                    // 读写缓存
                     payload = readWriteCacheMap.get(key);
                     readOnlyCacheMap.put(key, payload);
                 }
@@ -365,6 +382,8 @@ public class ResponseCacheImpl implements ResponseCache {
      * Generate pay load with both JSON and XML formats for all applications.
      */
     private String getPayLoad(Key key, Applications apps) {
+        // 通过传入key得到encoderWrapper
+        // 最终将apps序列化成String返回
         EncoderWrapper encoderWrapper = serverCodecs.getEncoder(key.getType(), key.getEurekaAccept());
         String result;
         try {
@@ -410,6 +429,7 @@ public class ResponseCacheImpl implements ResponseCache {
                     if (ALL_APPS.equals(key.getName())) {
                         if (isRemoteRegionRequested) {
                             tracer = serializeAllAppsWithRemoteRegionTimer.start();
+                            // 根据key和注册表信息得到value
                             payload = getPayLoad(key, registry.getApplicationsFromMultipleRegions(key.getRegions()));
                         } else {
                             tracer = serializeAllAppsTimer.start();

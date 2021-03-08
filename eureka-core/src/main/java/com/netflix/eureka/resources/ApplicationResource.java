@@ -143,6 +143,7 @@ public class ApplicationResource {
     @Consumes({"application/json", "application/xml"})
     public Response addInstance(InstanceInfo info,
                                 @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) {
+        // eureka server接收eureka client注册请求的处理方法
         logger.debug("Registering instance {} (replication={})", info.getId(), isReplication);
         // validate that the instanceinfo contains all the necessary required fields
         if (isBlank(info.getId())) {
