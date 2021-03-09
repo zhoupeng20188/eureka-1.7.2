@@ -109,6 +109,9 @@ public class Lease<T> {
      * @param additionalLeaseMs any additional lease time to add to the lease evaluation in ms.
      */
     public boolean isExpired(long additionalLeaseMs) {
+        // 判断是否过期
+        // 当前时间 > 上次更新时间+ duration(默认90s) + 补偿时间
+        // 这里有一个bug，上次更新时间在发送心跳续约时被设成了最新时间 + 90s,所以这里必须要等两个90s服务才算过期。
         return (evictionTimestamp > 0 || System.currentTimeMillis() > (lastUpdateTimestamp + duration + additionalLeaseMs));
     }
 

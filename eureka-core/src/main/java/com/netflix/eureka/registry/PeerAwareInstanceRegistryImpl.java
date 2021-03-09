@@ -253,6 +253,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         }
         logger.info("Changing status to UP");
         applicationInfoManager.setInstanceStatus(InstanceStatus.UP);
+        // 实际处理是在这里
         super.postInit();
     }
 
@@ -479,7 +480,9 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
 
     @Override
     public boolean isLeaseExpirationEnabled() {
+        // 自我保护配置是否开启，默认为开启
         if (!isSelfPreservationModeEnabled()) {
+            // 如果自我保护没有开启，则不会摘除任何实例
             // The self preservation mode is disabled, hence allowing the instances to expire.
             return true;
         }
