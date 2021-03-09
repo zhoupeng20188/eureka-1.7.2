@@ -222,7 +222,8 @@ public class EurekaBootStrap implements ServletContextListener {
         // 上下文holder，在整个系统中，谁都可以通过holder获取上下文
         EurekaServerContextHolder.initialize(serverContext);
 
-        // eureka server上下文初始化
+        // eureka server上下文初始化，
+        // 此方法中会调用peerEurekaNodes.start()方法，此方法中会更新eureka server的集群信息
         serverContext.initialize();
         logger.info("Initialized server context");
 

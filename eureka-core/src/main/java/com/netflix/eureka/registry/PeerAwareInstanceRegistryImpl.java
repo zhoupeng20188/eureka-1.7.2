@@ -207,6 +207,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         // Copy entire entry from neighboring DS node
         int count = 0;
 
+        // 默认可以重试5次
         for (int i = 0; ((i < serverConfig.getRegistrySyncRetries()) && (count == 0)); i++) {
             if (i > 0) {
                 try {
@@ -216,6 +217,8 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
                     break;
                 }
             }
+            // 由于一个eureka server也是一个eureka client，这里直接从自己client中获取注册表
+            // 在之前client已经从别的server中拉取到了注册表
             Applications apps = eurekaClient.getApplications();
             for (Application app : apps.getRegisteredApplications()) {
                 for (InstanceInfo instance : app.getInstances()) {
@@ -410,6 +413,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
             leaseDuration = info.getLeaseInfo().getDurationInSecs();
         }
         super.register(info, leaseDuration, isReplication);
+        // 同步给其它节点
         replicateToPeers(Action.Register, info.getAppName(), info.getId(), info, null, isReplication);
     }
 
@@ -629,6 +633,9 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
             }
             // If it is a replication already, do not replicate again as this will create a poison replication
             if (peerEurekaNodes == Collections.EMPTY_LIST || isReplication) {
+                // isReplication为true代表是节点间同步的请求，为false代表一般的client找server的请求
+                // 如果isReplication为true,则直接返回
+                // 比如一个注册请求，接到的isReplication为true，就不会再向其它server执行注册操作。
                 return;
             }
 
@@ -637,6 +644,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
                 if (peerEurekaNodes.isThisMyUrl(node.getServiceUrl())) {
                     continue;
                 }
+                // 将实例信息复制给其它节点
                 replicateInstanceActionsToPeers(action, appName, id, info, newStatus, node);
             }
         } finally {
@@ -655,6 +663,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         try {
             InstanceInfo infoFromRegistry = null;
             CurrentRequestVersion.set(Version.V2);
+            // 将所有状态都复制给其它节点
             switch (action) {
                 case Cancel:
                     node.cancel(appName, id);
