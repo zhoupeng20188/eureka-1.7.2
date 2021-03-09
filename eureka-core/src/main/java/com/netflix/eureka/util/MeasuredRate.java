@@ -29,7 +29,9 @@ import org.slf4j.LoggerFactory;
  */
 public class MeasuredRate {
     private static final Logger logger = LoggerFactory.getLogger(MeasuredRate.class);
+    // 上一分钟统计数
     private final AtomicLong lastBucket = new AtomicLong(0);
+    // 当前一分钟统计数
     private final AtomicLong currentBucket = new AtomicLong(0);
 
     private final long sampleInterval;
@@ -54,6 +56,8 @@ public class MeasuredRate {
                 public void run() {
                     try {
                         // Zero out the current bucket.
+                        // 每隔1分钟进行
+                        // 将当前一分钟统计数赋值给上一分钟统计数，再将当前一分钟统计数清0
                         lastBucket.set(currentBucket.getAndSet(0));
                     } catch (Throwable e) {
                         logger.error("Cannot reset the Measured Rate", e);

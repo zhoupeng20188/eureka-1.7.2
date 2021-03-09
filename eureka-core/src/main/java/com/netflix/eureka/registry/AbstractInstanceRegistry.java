@@ -236,7 +236,9 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                         // Since the client wants to cancel it, reduce the threshold
                         // (1
                         // for 30 seconds, 2 for a minute)
+                        // 每分钟期望收到的心跳数+2，因为30s发送一次心跳，所以每分钟发送2次
                         this.expectedNumberOfRenewsPerMin = this.expectedNumberOfRenewsPerMin + 2;
+                        // 每分钟实例数：每分钟期望心跳数 * 0.85
                         this.numberOfRenewsPerMinThreshold =
                                 (int) (this.expectedNumberOfRenewsPerMin * serverConfig.getRenewalPercentThreshold());
                     }
@@ -1170,6 +1172,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             description = "Number of total heartbeats received in the last minute", type = DataSourceType.GAUGE)
     @Override
     public long getNumOfRenewsInLastMin() {
+        // 获取每分钟续约实例数
         return renewsLastMin.getCount();
     }
 
