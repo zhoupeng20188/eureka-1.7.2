@@ -100,6 +100,7 @@ class AcceptorExecutor<ID, T> {
         this.trafficShaper = new TrafficShaper(congestionRetryDelayMs, networkFailureRetryMs);
 
         ThreadGroup threadGroup = new ThreadGroup("eurekaTaskExecutors");
+        // 启动线程
         this.acceptorThread = new Thread(threadGroup, new AcceptorRunner(), "TaskAcceptor-" + id);
         this.acceptorThread.setDaemon(true);
         this.acceptorThread.start();
@@ -120,6 +121,7 @@ class AcceptorExecutor<ID, T> {
     }
 
     void process(ID id, T task, long expiryTime) {
+        // 放入第一层队列
         acceptorQueue.add(new TaskHolder<ID, T>(id, task, expiryTime));
         acceptedTasks++;
     }
@@ -183,6 +185,7 @@ class AcceptorExecutor<ID, T> {
             long scheduleTime = 0;
             while (!isShutdown.get()) {
                 try {
+                    // 从第之前队列中取出任务放入processingOrder中
                     drainInputQueues();
 
                     int totalItems = processingOrder.size();
@@ -192,6 +195,7 @@ class AcceptorExecutor<ID, T> {
                         scheduleTime = now + trafficShaper.transmissionDelay();
                     }
                     if (scheduleTime <= now) {
+                        // 从processingOrder中取出任务放入到批处理队列中
                         assignBatchWork();
                         assignSingleItemWork();
                     }
@@ -216,7 +220,9 @@ class AcceptorExecutor<ID, T> {
 
         private void drainInputQueues() throws InterruptedException {
             do {
+                // 将reprocess队列中的任务放入processingOrder中
                 drainReprocessQueue();
+                // 将acceptor队列中的任务放入processingOrder中
                 drainAcceptorQueue();
 
                 if (!isShutdown.get()) {
@@ -307,6 +313,7 @@ class AcceptorExecutor<ID, T> {
                         batchWorkRequests.release();
                     } else {
                         batchSizeMetric.record(holders.size(), TimeUnit.MILLISECONDS);
+                        // 将一定时间内的任务加入到批处理队列中
                         batchWorkQueue.add(holders);
                     }
                 }

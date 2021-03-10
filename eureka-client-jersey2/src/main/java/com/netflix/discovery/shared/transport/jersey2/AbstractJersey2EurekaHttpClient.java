@@ -89,6 +89,7 @@ public abstract class AbstractJersey2EurekaHttpClient implements EurekaHttpClien
         try {
             Builder resourceBuilder = jerseyClient.target(serviceUrl).path(urlPath).request();
             addExtraProperties(resourceBuilder);
+            // 复制给其它节点的场合，这里会把header中的isReplicate设为true
             addExtraHeaders(resourceBuilder);
             // 发送post请求
             response = resourceBuilder

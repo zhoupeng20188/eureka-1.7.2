@@ -50,6 +50,7 @@ public class Jersey2ReplicationClient extends AbstractJersey2EurekaHttpClient im
 
     @Override
     protected void addExtraHeaders(Builder webResource) {
+        // isReplicate参数设为true
         webResource.header(PeerEurekaNode.HEADER_REPLICATION, "true");
     }
 
@@ -111,6 +112,7 @@ public class Jersey2ReplicationClient extends AbstractJersey2EurekaHttpClient im
         Response response = null;
         try {
             response = jerseyClient.target(serviceUrl)
+                    // peerreplication/batch/
                     .path(PeerEurekaNode.BATCH_URL_PATH)
                     .request(MediaType.APPLICATION_JSON_TYPE)
                     .post(Entity.json(replicationList));

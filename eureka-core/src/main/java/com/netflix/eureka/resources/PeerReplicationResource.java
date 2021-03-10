@@ -78,6 +78,7 @@ public class PeerReplicationResource {
     @Path("batch")
     @POST
     public Response batchReplication(ReplicationList replicationList) {
+        // 接受批量复制请求的处理
         try {
             ReplicationListResponse batchResponse = new ReplicationListResponse();
             for (ReplicationInstance instanceInfo : replicationList.getReplicationList()) {
@@ -97,6 +98,7 @@ public class PeerReplicationResource {
     }
 
     private ReplicationInstanceResponse dispatch(ReplicationInstance instanceInfo) {
+        // 实际处理
         ApplicationResource applicationResource = createApplicationResource(instanceInfo);
         InstanceResource resource = createInstanceResource(instanceInfo, applicationResource);
 
@@ -105,6 +107,8 @@ public class PeerReplicationResource {
         String instanceStatus = toString(instanceInfo.getStatus());
 
         Builder singleResponseBuilder = new Builder();
+        // 根据不同类型来决定调用哪些方法
+        // 实际上也是调用ApplicationResource中的方法，只不过把isReplicate参数设为true
         switch (instanceInfo.getAction()) {
             case Register:
                 singleResponseBuilder = handleRegister(instanceInfo, applicationResource);

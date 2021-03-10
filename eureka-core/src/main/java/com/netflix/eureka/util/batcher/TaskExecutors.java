@@ -74,9 +74,11 @@ class TaskExecutors<ID, T> {
                                                        final AcceptorExecutor<ID, T> acceptorExecutor) {
         final AtomicBoolean isShutdown = new AtomicBoolean();
         final TaskExecutorMetrics metrics = new TaskExecutorMetrics(name);
+        // 启动线程
         return new TaskExecutors<>(new WorkerRunnableFactory<ID, T>() {
             @Override
             public WorkerRunnable<ID, T> create(int idx) {
+                // 执行BatchWorkerRunnable的run方法
                 return new BatchWorkerRunnable<>("TaskBatchingWorker-" +name + '-' + idx, isShutdown, metrics, processor, acceptorExecutor);
             }
         }, workerCount, isShutdown);
@@ -180,10 +182,12 @@ class TaskExecutors<ID, T> {
         public void run() {
             try {
                 while (!isShutdown.get()) {
+                    // 从批处理队列中取出任务
                     List<TaskHolder<ID, T>> holders = getWork();
                     metrics.registerExpiryTimes(holders);
 
                     List<T> tasks = getTasksOf(holders);
+                    // 批量发送请求
                     ProcessingResult result = processor.process(tasks);
                     switch (result) {
                         case Success:
