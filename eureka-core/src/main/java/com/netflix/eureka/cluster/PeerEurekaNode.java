@@ -84,6 +84,7 @@ public class PeerEurekaNode {
     private final TaskDispatcher<String, ReplicationTask> nonBatchingDispatcher;
 
     public PeerEurekaNode(PeerAwareInstanceRegistry registry, String targetHost, String serviceUrl, HttpReplicationClient replicationClient, EurekaServerConfig config) {
+        // batch size默认为250，时间默认为500ms，即每次取500ms内的250个任务批量发送。
         this(registry, targetHost, serviceUrl, replicationClient, config, BATCH_SIZE, MAX_BATCHING_DELAY_MS, RETRY_SLEEP_TIME_MS, SERVER_UNAVAILABLE_SLEEP_TIME_MS);
     }
 

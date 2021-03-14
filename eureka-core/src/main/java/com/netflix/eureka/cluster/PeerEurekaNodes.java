@@ -190,6 +190,7 @@ public class PeerEurekaNodes {
         if (!toAdd.isEmpty()) {
             logger.info("Adding new peer nodes {}", toAdd);
             for (String peerUrl : toAdd) {
+                // createPeerEurekaNode里会开始批量处理
                 newNodeList.add(createPeerEurekaNode(peerUrl));
             }
         }
@@ -199,11 +200,13 @@ public class PeerEurekaNodes {
     }
 
     protected PeerEurekaNode createPeerEurekaNode(String peerEurekaNodeUrl) {
+        // 构造发送请求用client
         HttpReplicationClient replicationClient = JerseyReplicationClient.createReplicationClient(serverConfig, serverCodecs, peerEurekaNodeUrl);
         String targetHost = hostFromUrl(peerEurekaNodeUrl);
         if (targetHost == null) {
             targetHost = "host";
         }
+        // 创建PeerEurekaNode，其构造方法中会开始批量处理
         return new PeerEurekaNode(registry, targetHost, peerEurekaNodeUrl, replicationClient, serverConfig);
     }
 
